@@ -39,8 +39,9 @@ async function run() {
             const updateDoc = {
                 $set: user
             };
-            const result = await userCollection.updateOne(filter, updateDoc, options)
-            res.send(result)
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({result, token})
         })
         // Warning: This is not the proper way to query multiple collection. 
         // After learning more about mongodb. use aggregate, lookup, pipeline, match, group
