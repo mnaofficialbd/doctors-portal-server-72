@@ -65,6 +65,13 @@ async function run() {
              * app.delete('/booking/:id) //
             */
 
+        // booking all items API
+        app.get('/booking', async(req, res) =>{
+            const patient = req.query.patient;
+            const query = {patient: patient};
+            const bookings = await bookingCollection.find(query).toArray();
+            res.send(bookings);
+          })
 
         //booking insertOne item API
         app.post('/booking', async (req, res) => {
