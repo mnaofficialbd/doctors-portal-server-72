@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors');
+const jwt = require('jsonwebtoken')
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
@@ -19,6 +20,7 @@ async function run() {
         await client.connect();
         const serviceCollection = client.db('doctors_portal').collection('services');
         const bookingCollection = client.db('doctors_portal').collection('bookings');
+        const userCollection = client.db('doctors_portal').collection('users');
 
         //service api for find all data
         app.get('/service', async (req, res) => {
@@ -28,6 +30,18 @@ async function run() {
             res.send(services);
         });
 
+        //users API
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true }
+            const updateDoc = {
+                $set: user
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options)
+            res.send(result)
+        })
         // Warning: This is not the proper way to query multiple collection. 
         // After learning more about mongodb. use aggregate, lookup, pipeline, match, group
         app.get('/available', async (req, res) => {
@@ -66,12 +80,12 @@ async function run() {
             */
 
         // booking all items API
-        app.get('/booking', async(req, res) =>{
+        app.get('/booking', async (req, res) => {
             const patient = req.query.patient;
-            const query = {patient: patient};
+            const query = { patient: patient };
             const bookings = await bookingCollection.find(query).toArray();
             res.send(bookings);
-          })
+        })
 
         //booking insertOne item API
         app.post('/booking', async (req, res) => {
