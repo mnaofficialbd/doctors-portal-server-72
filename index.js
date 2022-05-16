@@ -29,7 +29,6 @@ function verifyJWT(req, res, next) {
     })
 }
 
-
 async function run() {
     try {
         await client.connect();
@@ -44,6 +43,12 @@ async function run() {
             const services = await cursor.toArray();
             res.send(services);
         });
+
+        //all users API
+        app.get('/user', async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users)
+        })
 
         //users API
         app.put('/user/:email', async (req, res) => {
