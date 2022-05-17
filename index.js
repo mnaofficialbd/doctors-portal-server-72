@@ -3,6 +3,8 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken')
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
+const nodemailer = require('nodemailer');
+const sgTransport = require('nodemailer-sendgrid-transport');
 
 const app = express()
 const port = process.env.PORT || 5000
@@ -41,7 +43,7 @@ const emailClient = nodemailer.createTransport(sgTransport(emailSenderOption));
 
 //nodemailer-sender-grid
 function sendAppointmentEmail(booking) {
-  const { patient, patientName, treatment, date, slot } = booking;
+  const {patient, patientName, treatment, date, slot} = booking;
 
   //email body
   const email = {
@@ -53,6 +55,11 @@ function sendAppointmentEmail(booking) {
     <div>
       <p>Hello ${patient}</p>
       <h3>Your appointment for ${treatment} is confirm</h3>
+      <p>Looking forward to seeing you on ${date} at ${slot}.</p>
+        
+        <h3>Our Address</h3>
+        <p>Raozan, Chittagong.</p>
+        <p>Bangladesh</p>
     </div>
     `
   };
@@ -188,6 +195,7 @@ async function run() {
       }
     })
 
+
     //booking insertOne item API
     app.post('/booking', async (req, res) => {
       const booking = req.body;
@@ -209,18 +217,18 @@ async function run() {
     });
 
     // Doctors get API
-    app.get('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
+    app.get('/doctor', verifyJWT, verifyAdmin, async(req, res) =>{
       const doctors = await doctorCollection.find().toArray();
       res.send(doctors);
-    });
+    })
 
     // Doctor delete API
     app.delete('/doctor/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
-      const filter = { email: email };
+      const filter = {email: email};
       const result = await doctorCollection.deleteOne(filter);
       res.send(result);
-    });
+    })
 
   }
   finally {
