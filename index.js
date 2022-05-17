@@ -30,6 +30,44 @@ function verifyJWT(req, res, next) {
   });
 }
 
+// nodemailer-sender-grid Auth
+const emailSenderOption = {
+  auth: {
+    api_key: process.env.EMAIL_SENDER_KEY
+  }
+}
+
+const emailClient = nodemailer.createTransport(sgTransport(emailSenderOption));
+
+//nodemailer-sender-grid
+function sendAppointmentEmail(booking) {
+  const { patient, patientName, treatment, date, slot } = booking;
+
+  //email body
+  const email = {
+    from: process.env.EMAIL_SENDER,
+    to: patient,
+    subject: `Your appointment for ${treatment} is on ${date} at ${slot} is Confirm`,
+    text: `Your appointment for ${treatment} is on ${date} at ${slot} is Confirm`,
+    html: `
+    <div>
+      <p>Hello ${patient}</p>
+      <h3>Your appointment for ${treatment} is confirm</h3>
+    </div>
+    `
+  };
+  
+  emailClient.sendMail(email, function (err, info) {
+    if (err) {
+      console.log(err);
+    }
+    else {
+      console.log('Message Send', info);
+    }
+  })
+}
+
+
 async function run() {
   try {
     await client.connect();
@@ -159,6 +197,7 @@ async function run() {
         return res.send({ success: false, booking: exists })
       }
       const result = await bookingCollection.insertOne(booking);
+      sendAppointmentEmail(booking);
       return res.send({ success: true, result });
     });
 
@@ -173,6 +212,14 @@ async function run() {
     app.get('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
       const doctors = await doctorCollection.find().toArray();
       res.send(doctors);
+    });
+
+    // Doctor delete API
+    app.delete('/doctor/:email', verifyJWT, verifyAdmin, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await doctorCollection.deleteOne(filter);
+      res.send(result);
     });
 
   }
