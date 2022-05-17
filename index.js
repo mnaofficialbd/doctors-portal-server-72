@@ -58,7 +58,7 @@ function sendAppointmentEmail(booking) {
       <p>Looking forward to seeing you on ${date} at ${slot}.</p>
         
         <h3>Our Address</h3>
-        <p>Raozan, Chittagong.</p>
+        <p>East Raozan, Chittagong.</p>
         <p>Bangladesh</p>
     </div>
     `
