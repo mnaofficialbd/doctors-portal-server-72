@@ -74,7 +74,7 @@ async function run() {
     })
 
     // Admin API
-    app.put('/user/admin/:email', verifyJWT,verifyAdmin, async (req, res) => {
+    app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
       const updateDoc = {
@@ -167,7 +167,13 @@ async function run() {
       const doctor = req.body;
       const result = await doctorCollection.insertOne(doctor);
       res.send(result);
-    })
+    });
+
+    // Doctors get API
+    app.get('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
+      const doctors = await doctorCollection.find().toArray();
+      res.send(doctors);
+    });
 
   }
   finally {
