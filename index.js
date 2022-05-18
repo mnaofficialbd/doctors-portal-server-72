@@ -2,9 +2,10 @@ const express = require('express')
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const nodemailer = require('nodemailer');
 const sgTransport = require('nodemailer-sendgrid-transport');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express()
 const port = process.env.PORT || 5000
@@ -43,7 +44,7 @@ const emailClient = nodemailer.createTransport(sgTransport(emailSenderOption));
 
 //nodemailer-sender-grid
 function sendAppointmentEmail(booking) {
-  const {patient, patientName, treatment, date, slot} = booking;
+  const { patient, patientName, treatment, date, slot } = booking;
 
   //email body
   const email = {
@@ -63,7 +64,7 @@ function sendAppointmentEmail(booking) {
     </div>
     `
   };
-  
+
   emailClient.sendMail(email, function (err, info) {
     if (err) {
       console.log(err);
@@ -94,6 +95,19 @@ async function run() {
         res.status(403).send({ message: 'forbidden' });
       }
     }
+
+    // payment related API (payment intent post api)
+    app.get('/create-payment-intent',verifyJWT, async (req, res) => {
+      const service = req.body;
+      const price=service.price;
+      const amount=price*100;
+      const paymentIntent=await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+      res.send({clientSecret: paymentIntent.client_secret})
+    })
 
     //service api for find all data
     app.get('/service', async (req, res) => {
@@ -195,6 +209,13 @@ async function run() {
       }
     })
 
+    // booking find one item api
+    app.get('/booking/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const booking = await bookingCollection.findOne(query);
+      res.send(booking);
+    })
 
     //booking insertOne item API
     app.post('/booking', async (req, res) => {
@@ -217,7 +238,7 @@ async function run() {
     });
 
     // Doctors get API
-    app.get('/doctor', verifyJWT, verifyAdmin, async(req, res) =>{
+    app.get('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
       const doctors = await doctorCollection.find().toArray();
       res.send(doctors);
     })
@@ -225,7 +246,7 @@ async function run() {
     // Doctor delete API
     app.delete('/doctor/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
-      const filter = {email: email};
+      const filter = { email: email };
       const result = await doctorCollection.deleteOne(filter);
       res.send(result);
     })
