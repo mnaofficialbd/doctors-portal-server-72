@@ -77,11 +77,11 @@ emailClient.sendMail(email, function (err, info) {
 } */
 
 // send email for payment success
- function sendPaymentConfirmationEmail(booking) {
-  const { patient, patientName, treatment, date, slot } = booking; 
+/*  function sendPaymentConfirmationEmail(booking) {
+  const { patient, patientName, treatment, date, slot } = booking;  */
 
 //email body
-const email = {
+/* const email = {
   from: process.env.EMAIL_SENDER,
   to: patient,
   subject: `We have received you payment for ${treatment} is on ${date} at ${slot} is Confirm`,
@@ -92,10 +92,6 @@ const email = {
     <h3>Thank you for your payment.</h3>
     <h3>We have received you payment.</h3>
     <p>Looking forward to seeing you on ${date} at ${slot}.</p>
-      
-      <h3>Our Address</h3>
-      <p>East Raozan, Chittagong.</p>
-      <p>Bangladesh</p>
   </div>
   `
 };
@@ -108,7 +104,7 @@ emailClient.sendMail(email, function (err, info) {
     console.log('Message Send', info);
   }
 })
-} 
+}  */
 
 async function run() {
   try {
@@ -262,6 +258,7 @@ async function run() {
       }
       const result = await bookingCollection.insertOne(booking);
       // sendAppointmentEmail(booking);
+      //sendPaymentConfirmationEmail(booking)
       return res.send({ success: true, result });
     });
 
