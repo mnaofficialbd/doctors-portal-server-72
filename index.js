@@ -34,46 +34,46 @@ function verifyJWT(req, res, next) {
 }
 
 // nodemailer-sender-grid Auth
-const emailSenderOption = {
+/* const emailSenderOption = {
   auth: {
     api_key: process.env.EMAIL_SENDER_KEY
   }
-}
+} */
 
-const emailClient = nodemailer.createTransport(sgTransport(emailSenderOption));
+// const emailClient = nodemailer.createTransport(sgTransport(emailSenderOption));
 
 //nodemailer-sender-grid
-function sendAppointmentEmail(booking) {
-  const { patient, patientName, treatment, date, slot } = booking;
+/* function sendAppointmentEmail(booking) {
+  const { patient, patientName, treatment, date, slot } = booking; */
 
-  //email body
-  const email = {
-    from: process.env.EMAIL_SENDER,
-    to: patient,
-    subject: `Your appointment for ${treatment} is on ${date} at ${slot} is Confirm`,
-    text: `Your appointment for ${treatment} is on ${date} at ${slot} is Confirm`,
-    html: `
-    <div>
-      <p>Hello ${patient}</p>
-      <h3>Your appointment for ${treatment} is confirm</h3>
-      <p>Looking forward to seeing you on ${date} at ${slot}.</p>
-        
-        <h3>Our Address</h3>
-        <p>East Raozan, Chittagong.</p>
-        <p>Bangladesh</p>
-    </div>
-    `
-  };
+//email body
+/* const email = {
+  from: process.env.EMAIL_SENDER,
+  to: patient,
+  subject: `Your appointment for ${treatment} is on ${date} at ${slot} is Confirm`,
+  text: `Your appointment for ${treatment} is on ${date} at ${slot} is Confirm`,
+  html: `
+  <div>
+    <p>Hello ${patient}</p>
+    <h3>Your appointment for ${treatment} is confirm</h3>
+    <p>Looking forward to seeing you on ${date} at ${slot}.</p>
+      
+      <h3>Our Address</h3>
+      <p>East Raozan, Chittagong.</p>
+      <p>Bangladesh</p>
+  </div>
+  `
+};
 
-  emailClient.sendMail(email, function (err, info) {
-    if (err) {
-      console.log(err);
-    }
-    else {
-      console.log('Message Send', info);
-    }
-  })
-}
+emailClient.sendMail(email, function (err, info) {
+  if (err) {
+    console.log(err);
+  }
+  else {
+    console.log('Message Send', info);
+  }
+})
+} */
 
 
 async function run() {
@@ -83,6 +83,7 @@ async function run() {
     const bookingCollection = client.db('doctors_portal').collection('bookings');
     const userCollection = client.db('doctors_portal').collection('users');
     const doctorCollection = client.db('doctors_portal').collection('doctors');
+    const paymentCollection = client.db('doctors_portal').collection('payments');
 
     // Admin verify
     const verifyAdmin = async (req, res, next) => {
@@ -97,16 +98,16 @@ async function run() {
     }
 
     // payment related API (payment intent post api)
-    app.get('/create-payment-intent',verifyJWT, async (req, res) => {
+    app.get('/create-payment-intent', verifyJWT, async (req, res) => {
       const service = req.body;
-      const price=service.price;
-      const amount=price*100;
-      const paymentIntent=await stripe.paymentIntents.create({
+      const price = service.price;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: 'usd',
         payment_method_types: ['card']
       });
-      res.send({clientSecret: paymentIntent.client_secret})
+      res.send({ clientSecret: paymentIntent.client_secret })
     })
 
     //service api for find all data
@@ -226,9 +227,26 @@ async function run() {
         return res.send({ success: false, booking: exists })
       }
       const result = await bookingCollection.insertOne(booking);
-      sendAppointmentEmail(booking);
+      // sendAppointmentEmail(booking);
       return res.send({ success: true, result });
     });
+
+    // booking update for payment
+    app.patch('/booking/:id', verifyJWT, async (req, res) => {
+      const id=req.params.id;
+      const payment=req.body;
+      const filter={_id: ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        }
+      };
+      // payment details set in paymentCollection
+      const result=await paymentCollection.insertOne(payment);
+      const updatedBooking=await bookingCollection.updateOne(filter, updatedDoc);
+      res.send(updatedDoc)
+    })
 
     // Doctors add API (dr. info post)
     app.post('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
