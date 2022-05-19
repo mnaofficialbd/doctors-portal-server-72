@@ -42,7 +42,8 @@ function verifyJWT(req, res, next) {
 
 // const emailClient = nodemailer.createTransport(sgTransport(emailSenderOption));
 
-//nodemailer-sender-grid
+//nodemailer-sender-grid: 
+// send email for booking success
 /* function sendAppointmentEmail(booking) {
   const { patient, patientName, treatment, date, slot } = booking; */
 
@@ -75,6 +76,39 @@ emailClient.sendMail(email, function (err, info) {
 })
 } */
 
+// send email for payment success
+ function sendPaymentConfirmationEmail(booking) {
+  const { patient, patientName, treatment, date, slot } = booking; 
+
+//email body
+const email = {
+  from: process.env.EMAIL_SENDER,
+  to: patient,
+  subject: `We have received you payment for ${treatment} is on ${date} at ${slot} is Confirm`,
+  text: `Your payment for this appointment ${treatment} is on ${date} at ${slot} is Confirm`,
+  html: `
+  <div>
+    <p>Hello ${patient}</p>
+    <h3>Thank you for your payment.</h3>
+    <h3>We have received you payment.</h3>
+    <p>Looking forward to seeing you on ${date} at ${slot}.</p>
+      
+      <h3>Our Address</h3>
+      <p>East Raozan, Chittagong.</p>
+      <p>Bangladesh</p>
+  </div>
+  `
+};
+
+emailClient.sendMail(email, function (err, info) {
+  if (err) {
+    console.log(err);
+  }
+  else {
+    console.log('Message Send', info);
+  }
+})
+} 
 
 async function run() {
   try {
